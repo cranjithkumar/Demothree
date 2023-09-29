@@ -1,0 +1,7 @@
+{
+  "defaultSchema": "spark_transformation_in_big_qery",
+  "assertionSchema": "dataform_assertions",
+  "warehouse": "bigquery",
+  "defaultDatabase": "sincere-passage-397504",
+  "defaultLocation": "US"
+}

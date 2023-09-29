@@ -1,0 +1,77 @@
+CREATE OR REPLACE PROCEDURE `sincere-passage-397504`.spark_transformation_in_big_qery.DataformTemp_Result_SP()
+BEGIN
+CREATE TEMP TABLE Temp_Order_OrderDetails_Join AS (
+SELECT (o.CustomerID) as CustomerID,
+ROUND(SUM(o.Freight), 2) as total_freight,
+ROUND(SUM(od.UnitPrice * od.Quantity), 2) as total_amount,
+ROUND(MAX(od.UnitPrice * od.Quantity), 2) as max_amount,
+ROUND(MIN(od.UnitPrice * od.Quantity), 2) as min_amount,
+ROUND(AVG(od.UnitPrice * od.Quantity), 2) as avg_amount,
+COUNT(*) as total_count
+FROM `sincere-passage-397504`.spark_transformation_in_big_qery.orders o
+JOIN `sincere-passage-397504`.spark_transformation_in_big_qery.order_details od
+ON o.OrderID = od.OrderID
+GROUP BY o.CustomerID
+);
+ CREATE or replace TEMP TABLE Temp_Order_OrderDetails_Join_Customer AS (SELECT
+
+c.CustomerID,t.total_freight,
+t.total_amount,t.max_amount,t.min_amount,t.avg_amount,t.total_count,
+UPPER(c.CompanyName) as CompanyName,
+CONCAT(ContactName, ' - ', ContactTitle) as ContactTitle,TRIM(REPLACE(SUBSTR(Phone, 2), ')', '-')) as Phone,
+Country,LOWER(IFNULL(Region, 'not specified')) as Region
+FROM Temp_Order_OrderDetails_Join t LEFT JOIN 
+`sincere-passage-397504`.spark_transformation_in_big_qery.customer c ON t.CustomerID=c.CustomerID);
+select * from Temp_Order_OrderDetails_Join_Customer;
+
+
+CREATE OR REPLACE TABLE `sincere-passage-397504`.spark_transformation_in_big_qery.Dataform_Temp_Final_output_Result
+
+(
+current_timetsamp TIMESTAMP,
+current_date DATE,
+CustomerID STRING,
+total_freight FLOAT64,
+total_amount FLOAT64,
+max_amount FLOAT64,
+min_amount FLOAT64,
+avg_amount FLOAT64,
+total_count INT64,
+CompanyName STRING,
+ContactTitle STRING,
+Country STRING,
+Region STRING,
+Phone STRING,
+for_lit_function INT64
+);
+INSERT INTO `sincere-passage-397504`.spark_transformation_in_big_qery.Dataform_Temp_Final_output_Result
+
+SELECT
+CURRENT_TIMESTAMP() as current_timestamp,
+CURRENT_DATE() as current_date,
+CustomerID,
+total_freight,
+total_amount,
+max_amount,
+min_amount,
+avg_amount,
+total_count,
+CompanyName,
+ContactTitle,
+Country,
+Region,
+Phone,
+CAST('1' as INT64) as for_lit_function
+FROM Temp_Order_OrderDetails_Join_Customer
+WHERE Country NOT IN ('USA');
+--AND Phone NOT LIKE '5%';
+
+DROP TABLE Temp_Order_OrderDetails_Join;
+DROP TABLE Temp_Order_OrderDetails_Join_Customer;
+END;
+
+CALL `sincere-passage-397504`.spark_transformation_in_big_qery.DataformTemp_Result_SP();
+
+
+
+
